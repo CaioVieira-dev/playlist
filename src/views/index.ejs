@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script defer src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script defer type="text/javascript" src="/js/scripts.js"></script>
+
+    <title>Playlist</title>
+</head>
+
+<body>
+    <header>
+        <h1>Playlist</h1>
+        <p>Uma playlist que é realmente a sua cara</p>
+    </header>
+
+    <section id="window" class="container">
+        <div class="flexItem1">
+            <main>
+                <div id="main-container">
+                    <div id="player"></div>
+
+                </div>
+            </main>
+        </div>
+        <div class="flexItem2">
+            <aside id="list">
+                <ul>
+                    <% playlist.forEach((video)=>{ %>
+                        <li id="<%= video.id %> " class="mini-video" YTlink="<%= video.link %>">
+                            <div class="overlay"></div>
+                            <img class="thumb" src="<%= video.imgId %>" alt="<%= video.title %> ">
+                            <p>
+                                <%= video.title %>
+                            </p>
+                            <img id='config_<%= video.id %>' class="config" src="/cog.svg" alt="configurar video" />
+                            <div id="modalConfig_<%= video.id %>" class="modalUpdate hide">
+                                <div class="triangle"></div>
+                                <form id="updateForm_<%= video.id %>" class="updateForm" method="post"
+                                    name="updateForm">
+                                    <span>X</span>
+                                    <h2>O link quebrou?</h2>
+                                    <label for="updateLink_<%= video.id %>">Atualize o link:</label>
+                                    <input id="updateHiddenId_<%= video.id %>" type="hidden" name="id"
+                                        value="<%= video.id %>">
+                                    <input id="updateLink_<%= video.id %>" name="link" type="text">
+                                    <button form='updateForm_<%= video.id %>'>Salvar alteração</button>
+                                    <button class="deleteVideo">Deletar Video</button>
+                                </form>
+                            </div>
+                        </li>
+                        <% }) %>
+                </ul>
+            </aside>
+        </div>
+        <div class="flexItem3">
+            <section id="controllers">
+
+                <button class="btn" id="shuffle"><img src="/shuffle.svg"></img></button>
+                <button class="btn" id="previous"><img src="/play-previous.svg"></img></button>
+                <button class="btn" id="play"><img src="/play.svg"></img></button>
+                <button class="btn" id="next"><img src="/play-next.svg"></img></button>
+                <button class="btn" id="repeat"><img src="/repeat.svg"></img></button>
+            </section>
+        </div>
+    </section>
+
+
+
+    <h2 class="cta ">Adicione um novo video</h2>
+    <div class="modal hide">
+        <div class="modal-overlay"></div>
+        <form action="/" method="post" id="newVideoForm">
+            <span>X</span>
+            <h2>Adicione um novo video</h2>
+            <label for="link">Cole o link do video aqui</label>
+            <input type="text" id="link" name="link">
+            <button>Salvar</button>
+        </form>
+
+    </div>
+    <form class="trickForm" action="/" method="post" id="trickForm">
+        <input id="trickLink" name="link" type="hidden">
+    </form>
+
+    <form id="trickUpdateForm" method="post">
+        <input id="trickUpdateLink" name="link" type="hidden">
+    </form>
+    <form id="deleteForm" method="post">
+</body>
+
+</html>
