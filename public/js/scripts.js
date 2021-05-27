@@ -62,6 +62,10 @@ const Modal = {
     },
 }
 
+const Events = {
+    listOfVideo: document.querySelectorAll('li'),
+}
+
 const PlayerController = {
     playButton: document.querySelector('#play'),
     previousButton: document.querySelector('#previous'),
@@ -69,7 +73,19 @@ const PlayerController = {
     shuffleButton: document.querySelector('#shuffle'),
     repeatButton: document.querySelector('#repeat'),
     player: "",
-    playlist: ["bGwL06dBWlA", "oiIzKjDQACY", "UWkXo5XMTP4"],
+    playlist: [
+        {
+            videoId: "bGwL06dBWlA",
+            listId: "videoListItem_1"
+        },
+        {
+            videoId: "oiIzKjDQACY",
+            listId: "videoListItem_2"
+        },
+        {
+            videoId: "UWkXo5XMTP4",
+            listId: "videoListItem_3"
+        }],
     playing: 0,
     isRepeatToggled: false,
     isShuffleToggled: false,
@@ -86,26 +102,77 @@ const PlayerController = {
         }
 
     },
+    playSelected(link, videoListId) {
+        let videoId = link.substr(link.indexOf('watch?v=') + 8)
+
+        let id;
+        for (let i = 0; i < PlayerController.playlist.length; i++) {
+            if (PlayerController.playlist[i].videoId.indexOf(videoId) != -1) {
+                id = i;
+            }
+        }
+
+
+        //rodar video
+        PlayerController.player.loadVideoById(PlayerController.playlist[id].videoId)
+        //setar indice para controlar eventos da playlist
+        PlayerController.playing = id;
+
+        //remover isActive de todos
+        for (let i = 0; i < Events.listOfVideo.length; i++) {
+            Events.listOfVideo[i].classList.remove('isActive')
+        }
+        //adicionar isActive nesse
+        let query = `#${videoListId}`;
+        document.querySelector(query).classList.add('isActive')
+
+        //ja começa rodando, então troque o icone para o pause
+        PlayerController.isPlaying = true;
+        document.querySelector('#play img').setAttribute('src', '/pause.svg')
+
+    },
     next() {
         // console.log(PlayerController.playlist)
         if (PlayerController.playing == PlayerController.playlist.length - 1) {
-            PlayerController.player.loadVideoById(PlayerController.playlist[0]);
+            PlayerController.playing = 0;
+            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
         } else {
             PlayerController.playing++;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing]);
+            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
         }
 
+        //remover isActive de todos
+        for (let i = 0; i < Events.listOfVideo.length; i++) {
+            Events.listOfVideo[i].classList.remove('isActive')
+
+        }
+
+        let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
+        document.querySelector(query).classList.add('isActive')
+
+        //ja começa rodando, então troque o icone para o pause
         PlayerController.isPlaying = true;
         document.querySelector('#play img').setAttribute('src', '/pause.svg')
 
     },
     previous() {
         if (PlayerController.playing == 0) {
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playlist.length - 1]);
+            PlayerController.playing = PlayerController.playlist.length - 1;
+            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
         } else {
             PlayerController.playing--;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing]);
+            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
         }
+
+        for (let i = 0; i < Events.listOfVideo.length; i++) {
+            Events.listOfVideo[i].classList.remove('isActive')
+
+        }
+
+        let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
+        document.querySelector(query).classList.add('isActive')
+
+        //ja começa rodando, então troque o icone para o pause
         PlayerController.isPlaying = true;
         document.querySelector('#play img').setAttribute('src', '/pause.svg')
 
@@ -116,12 +183,22 @@ const PlayerController = {
 
         PlayerController.isRepeatToggled = PlayerController.isRepeatToggled ? false : true;
         //console.log(PlayerController.isRepeatToggled)
-
+        if (PlayerController.isRepeatToggled) {
+            PlayerController.repeatButton.querySelector('img').setAttribute('src', '/greenRepeat.svg')
+        } else {
+            PlayerController.repeatButton.querySelector('img').setAttribute('src', '/repeat.svg')
+        }
 
     },
     shuffle() {
         //setar estado de shuffle
         PlayerController.isShuffleToggled = PlayerController.isShuffleToggled ? false : true;
+
+        if (PlayerController.isShuffleToggled) {
+            PlayerController.shuffleButton.querySelector('img').setAttribute('src', '/greenShuffle.svg')
+        } else {
+            PlayerController.shuffleButton.querySelector('img').setAttribute('src', '/shuffle.svg')
+        }
     },
     init() {
         PlayerController.playButton.addEventListener('click', PlayerController.playPause)
@@ -154,11 +231,24 @@ const PlayerController = {
             }
 
             if (PlayerController.isShuffleToggled) {
+                //randomizar o proximo video
                 let randomVideoIndex = Math.floor(Math.random() * PlayerController.playlist.length)
                 PlayerController.playing = randomVideoIndex;
-                PlayerController.player.loadVideoById(PlayerController.playlist[randomVideoIndex]);
+                PlayerController.player.loadVideoById(PlayerController.playlist[randomVideoIndex].videoId);
+
+                //remover isActive de todos
+                for (let i = 0; i < Events.listOfVideo.length; i++) {
+                    Events.listOfVideo[i].classList.remove('isActive')
+
+                }
+
+                let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
+                document.querySelector(query).classList.add('isActive')
+
+                //ja começa rodando, então troque o icone para o pause
                 PlayerController.isPlaying = true;
                 document.querySelector('#play img').setAttribute('src', '/pause.svg')
+
 
                 return;
             }
@@ -176,15 +266,24 @@ const PlayerController = {
 
         const listOfVideoId = Array.from(document.querySelectorAll(".mini-video")).map((item) => {
             let video = item.getAttribute("YTlink")
-
-            return video.substr(video.indexOf('watch?v=') + 8)
+            let id = item.getAttribute('id')
+            return {
+                videoId: video.substr(video.indexOf('watch?v=') + 8),
+                listId: id
+            }
         })
 
         PlayerController.playlist = listOfVideoId;
         //console.log(PlayerController.playlist)
     },
     setPlaylistIndex() {
-        PlayerController.playing = PlayerController.playlist.indexOf(PlayerController.player.getVideoData()['video_id'])
+        for (let i = 0; i < PlayerController.playlist.length; i++) {
+            if (PlayerController.playlist[i].videoId.indexOf(PlayerController.player.getVideoData()['video_id']) != -1) {
+                PlayerController.playing = i;
+                let query = `#${PlayerController.playlist[i].listId}`
+                document.querySelector(query).classList.add('isActive')
+            }
+        }
     }
 
 
@@ -269,8 +368,22 @@ for (let i = 0; i < Modal.configModals.length; i++) {
     }
 
 }
+for (let i = 0; i < Events.listOfVideo.length; i++) {
+    //$('li .titleWrapper').click(function () { alert('li click') })
+    let thumbnail = Events.listOfVideo[i].querySelector('.thumb');
+    let title = Events.listOfVideo[i].querySelector('.titleWrapper');
+
+    thumbnail.addEventListener('click', function () {
+        // console.log('thumb click ', Events.listOfVideo[i].getAttribute('ytlink'))
+        PlayerController.playSelected(Events.listOfVideo[i].getAttribute('ytlink'), Events.listOfVideo[i].getAttribute('id'))
+    })
+    title.addEventListener('click', function () {
+        PlayerController.playSelected(Events.listOfVideo[i].getAttribute('ytlink'), Events.listOfVideo[i].getAttribute('id'))
+    })
+}
 
 PlayerController.init();
 Modal.init();
 
 PlayerController.setPlaylist();
+

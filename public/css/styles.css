@@ -101,7 +101,13 @@ li{
     height: 23%;
     cursor: pointer;
 }
-li:hover{
+li.isActive{
+    background-color:#6f5d9e;
+}
+li.isActive:hover{
+    background-color:#8c75c9;
+}
+li:hover:not(.isActive){
     background-color: #44475a	;
 }
 
@@ -112,12 +118,19 @@ li img.thumb{
    height: 100%;
    flex:20%
 }
+li .titleWrapper{
+    flex:80%;
+    height:100%;
 
-li p{
+}
+li .titleWrapper p{
     display: inline-block;
     padding: 0 1rem;
-    flex:80%;
-
+    position: relative;
+    top: 50%;
+    left: 0;
+    transform: translate(0,-50%);
+   
 }
 li img.config{
     margin-right: 1rem;
@@ -330,6 +343,7 @@ form.updateForm button.deleteVideo{
     position:relative;
 
 }
+
 button.btn:hover{
     background-color:#8872c2;
 }

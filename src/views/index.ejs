@@ -33,12 +33,14 @@
             <aside id="list">
                 <ul>
                     <% playlist.forEach((video)=>{ %>
-                        <li id="<%= video.id %> " class="mini-video" YTlink="<%= video.link %>">
+                        <li id="videoListItem_<%= video.id %>" class="mini-video" YTlink="<%= video.link %>">
                             <div class="overlay"></div>
                             <img class="thumb" src="<%= video.imgId %>" alt="<%= video.title %> ">
-                            <p>
-                                <%= video.title %>
-                            </p>
+                            <div class="titleWrapper">
+                                <p>
+                                    <%= video.title %>
+                                </p>
+                            </div>
                             <img id='config_<%= video.id %>' class="config" src="/cog.svg" alt="configurar video" />
                             <div id="modalConfig_<%= video.id %>" class="modalUpdate hide">
                                 <div class="triangle"></div>
