@@ -348,12 +348,18 @@ button.btn:hover{
     background-color:#8872c2;
 }
 
-
+.ctaWrapper{
+    text-align:center;
+    width: 100%;
+}
 .cta{
     cursor:pointer;
     text-align:center;
+    display:inline-block;
+    background-color:#32294d;
     margin-top: 1rem;
     padding:2rem;
+    border-radius: 0.5rem;
 }
 .cta:hover:not(.disabled){
     color:#d7d7f5;

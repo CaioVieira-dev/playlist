@@ -147,6 +147,10 @@ const Utils = {
     changeToPauseButton() {
         PlayerController.isPlaying = true;
         document.querySelector('#play img').setAttribute('src', '/pause.svg')
+    },
+    changeToPlayButton() {
+        PlayerController.isPlaying = false;
+        document.querySelector('#play img').setAttribute('src', '/play.svg')
     }
 }
 const PlayerController = {
@@ -282,6 +286,11 @@ const PlayerController = {
         //1 = player running
         if (PlayerController.player.getPlayerState() == 1) {
             PlayerController.setLastSeenVideo();
+            Utils.changeToPauseButton();
+        }
+        //2 - player paused
+        if (PlayerController.player.getPlayerState() == 2) {
+            Utils.changeToPlayButton()
         }
     },
     setPlaylist() {
