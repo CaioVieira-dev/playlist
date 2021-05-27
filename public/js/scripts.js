@@ -9,7 +9,6 @@ const Storage = {
         localStorage.setItem("__playlist:lastSeen", `"${videoId}"`)
     }
 }
-
 const Modal = {
     showButton: document.querySelector(".cta"),
     modal: document.querySelector(".modal"),
@@ -61,11 +60,95 @@ const Modal = {
         }
     },
 }
-
-const Events = {
+const Utils = {
     listOfVideo: document.querySelectorAll('li'),
-}
+    prepareEvents() {
 
+        //set new form submit event
+        $('#newVideoForm').submit(function (eventObj) {
+
+            //console.log(eventObj.currentTarget.querySelector('input').value);
+
+            let url = eventObj.currentTarget.querySelector('input').value
+            //TODO: validate link
+            $.getJSON('https://noembed.com/embed',
+                { format: 'json', url: url }, function (data) {
+                    $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickForm');
+                    $('#trickLink').attr('value', $('#link').val())
+                    $('#trickForm').submit();
+                })
+            //console.log(eventObj.currentTarget);
+
+            //$(this).append('<input type="hidden" name="title" value=""/>')
+            return false;
+        })
+
+        //set update event
+        for (let i = 0; i < Modal.configModals.length; i++) {
+            // console.log(Modal.configModals[i].querySelector('form').getAttribute('id'))
+            let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
+            $("#" + formId).submit(function (eventObj) {
+                let url = eventObj.currentTarget.querySelector('input[type="text"]').value;
+                var updateTargetId = eventObj.currentTarget.querySelector('input[type="hidden"]').value;
+                $.getJSON('https://noembed.com/embed',
+                    { format: 'json', url: url }, function (data) {
+
+                        $('#trickUpdateForm').attr('action', '/update/' + updateTargetId)
+                        $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickUpdateForm');
+                        $('#trickUpdateLink').attr('value', $('#updateLink_' + formId.replace('updateForm_', "")).val());
+                        $('#trickUpdateForm').submit();
+                    })
+
+                return false;
+            })
+        }
+        //set click event on delete button
+        for (let i = 0; i < Modal.configModals.length; i++) {
+            let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
+
+
+            const deleteButton = document.querySelector(`#${formId} .deleteVideo`);
+            let videoId = formId.replace('updateForm_', "")
+
+            let deleteAction = '/delete/' + Number(videoId)
+            deleteButton.onclick = () => {
+
+                document.querySelector('#deleteForm').setAttribute('action', deleteAction);
+                $('#deleteForm').submit();
+                //   alert('clicked')
+            }
+
+        }
+        //set click event on video list
+        for (let i = 0; i < Utils.listOfVideo.length; i++) {
+            //$('li .titleWrapper').click(function () { alert('li click') })
+            let thumbnail = Utils.listOfVideo[i].querySelector('.thumb');
+            let title = Utils.listOfVideo[i].querySelector('.titleWrapper');
+
+            thumbnail.addEventListener('click', function () {
+                // console.log('thumb click ', Utils.listOfVideo[i].getAttribute('ytlink'))
+                PlayerController.playSelected(Utils.listOfVideo[i].getAttribute('ytlink'), Utils.listOfVideo[i].getAttribute('id'))
+            })
+            title.addEventListener('click', function () {
+                PlayerController.playSelected(Utils.listOfVideo[i].getAttribute('ytlink'), Utils.listOfVideo[i].getAttribute('id'))
+            })
+        }
+
+    },
+    removeAllIsActive() {
+        for (let i = 0; i < Utils.listOfVideo.length; i++) {
+            Utils.listOfVideo[i].classList.remove('isActive')
+        }
+    },
+    setIsActive(elementId) {
+        let query = `#${elementId}`;
+        document.querySelector(query).classList.add('isActive')
+    },
+    changeToPauseButton() {
+        PlayerController.isPlaying = true;
+        document.querySelector('#play img').setAttribute('src', '/pause.svg')
+    }
+}
 const PlayerController = {
     playButton: document.querySelector('#play'),
     previousButton: document.querySelector('#previous'),
@@ -104,85 +187,45 @@ const PlayerController = {
     },
     playSelected(link, videoListId) {
         let videoId = link.substr(link.indexOf('watch?v=') + 8)
-
         let id;
         for (let i = 0; i < PlayerController.playlist.length; i++) {
             if (PlayerController.playlist[i].videoId.indexOf(videoId) != -1) {
                 id = i;
             }
         }
-
-
         //rodar video
         PlayerController.player.loadVideoById(PlayerController.playlist[id].videoId)
         //setar indice para controlar eventos da playlist
         PlayerController.playing = id;
-
-        //remover isActive de todos
-        for (let i = 0; i < Events.listOfVideo.length; i++) {
-            Events.listOfVideo[i].classList.remove('isActive')
-        }
-        //adicionar isActive nesse
-        let query = `#${videoListId}`;
-        document.querySelector(query).classList.add('isActive')
-
+        //remove isActive from all elements
+        Utils.removeAllIsActive()
+        //add isActive to this element
+        Utils.setIsActive(videoListId)
         //ja começa rodando, então troque o icone para o pause
-        PlayerController.isPlaying = true;
-        document.querySelector('#play img').setAttribute('src', '/pause.svg')
+        Utils.changeToPauseButton()
 
     },
     next() {
-        // console.log(PlayerController.playlist)
-        if (PlayerController.playing == PlayerController.playlist.length - 1) {
-            PlayerController.playing = 0;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
-        } else {
-            PlayerController.playing++;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
-        }
-
-        //remover isActive de todos
-        for (let i = 0; i < Events.listOfVideo.length; i++) {
-            Events.listOfVideo[i].classList.remove('isActive')
-
-        }
-
-        let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
-        document.querySelector(query).classList.add('isActive')
-
-        //ja começa rodando, então troque o icone para o pause
-        PlayerController.isPlaying = true;
-        document.querySelector('#play img').setAttribute('src', '/pause.svg')
-
+        //udate index
+        PlayerController.playing = PlayerController.playing == PlayerController.playlist.length - 1 ? 0 : PlayerController.playing + 1;
+        //change loaded video
+        PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
+        //remove isActive class from all videos on list
+        Utils.removeAllIsActive()
+        //add isActive class to current video playing
+        Utils.setIsActive(PlayerController.playlist[PlayerController.playing].listId)
+        //change play button to pause button
+        Utils.changeToPauseButton()
     },
     previous() {
-        if (PlayerController.playing == 0) {
-            PlayerController.playing = PlayerController.playlist.length - 1;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
-        } else {
-            PlayerController.playing--;
-            PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
-        }
-
-        for (let i = 0; i < Events.listOfVideo.length; i++) {
-            Events.listOfVideo[i].classList.remove('isActive')
-
-        }
-
-        let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
-        document.querySelector(query).classList.add('isActive')
-
-        //ja começa rodando, então troque o icone para o pause
-        PlayerController.isPlaying = true;
-        document.querySelector('#play img').setAttribute('src', '/pause.svg')
-
-
+        PlayerController.playing = PlayerController.playing == 0 ? PlayerController.playlist.length - 1 : PlayerController.playing - 1;
+        PlayerController.player.loadVideoById(PlayerController.playlist[PlayerController.playing].videoId);
+        Utils.removeAllIsActive()
+        Utils.setIsActive(PlayerController.playlist[PlayerController.playing].listId)
+        Utils.changeToPauseButton()
     },
     repeat() {
-        //TODO criar logica para voltar a lista do começo
-
         PlayerController.isRepeatToggled = PlayerController.isRepeatToggled ? false : true;
-        //console.log(PlayerController.isRepeatToggled)
         if (PlayerController.isRepeatToggled) {
             PlayerController.repeatButton.querySelector('img').setAttribute('src', '/greenRepeat.svg')
         } else {
@@ -191,9 +234,7 @@ const PlayerController = {
 
     },
     shuffle() {
-        //setar estado de shuffle
         PlayerController.isShuffleToggled = PlayerController.isShuffleToggled ? false : true;
-
         if (PlayerController.isShuffleToggled) {
             PlayerController.shuffleButton.querySelector('img').setAttribute('src', '/greenShuffle.svg')
         } else {
@@ -213,47 +254,30 @@ const PlayerController = {
     stateChange() {
         //0 = fim do video
         if (PlayerController.player.getPlayerState() == 0) {
-
+            //repeat button is toggled on
             if (PlayerController.isRepeatToggled) {
                 PlayerController.player.seekTo(0, false)
                 if (PlayerController.player.getPlayerState() == 0 ||
                     PlayerController.player.getPlayerState() == -1 ||
                     PlayerController.player.getPlayerState() == 2) {
-
                     PlayerController.player.playVideo()
-                    PlayerController.isPlaying = true;
-                    document.querySelector('#play img').setAttribute('src', '/pause.svg')
-
+                    Utils.changeToPauseButton()
                 }
-
                 return;
-
             }
-
+            //shuffle button is toggled on
             if (PlayerController.isShuffleToggled) {
-                //randomizar o proximo video
+                //randomize next video
                 let randomVideoIndex = Math.floor(Math.random() * PlayerController.playlist.length)
                 PlayerController.playing = randomVideoIndex;
                 PlayerController.player.loadVideoById(PlayerController.playlist[randomVideoIndex].videoId);
-
-                //remover isActive de todos
-                for (let i = 0; i < Events.listOfVideo.length; i++) {
-                    Events.listOfVideo[i].classList.remove('isActive')
-
-                }
-
-                let query = `#${PlayerController.playlist[PlayerController.playing].listId}`
-                document.querySelector(query).classList.add('isActive')
-
-                //ja começa rodando, então troque o icone para o pause
-                PlayerController.isPlaying = true;
-                document.querySelector('#play img').setAttribute('src', '/pause.svg')
-
-
+                Utils.removeAllIsActive()
+                Utils.setIsActive(PlayerController.playlist[PlayerController.playing].listId)
+                Utils.changeToPauseButton()
                 return;
             }
 
-            PlayerController.next();//vai para o proximo video
+            PlayerController.next();//go to next video of the list
         }
         //1 = player running
         if (PlayerController.player.getPlayerState() == 1) {
@@ -280,17 +304,11 @@ const PlayerController = {
         for (let i = 0; i < PlayerController.playlist.length; i++) {
             if (PlayerController.playlist[i].videoId.indexOf(PlayerController.player.getVideoData()['video_id']) != -1) {
                 PlayerController.playing = i;
-                let query = `#${PlayerController.playlist[i].listId}`
-                document.querySelector(query).classList.add('isActive')
+                Utils.setIsActive(PlayerController.playlist[i].listId)
             }
         }
     }
-
-
 }
-
-
-
 function onYouTubeIframeAPIReady() {
     PlayerController.player = new YT.Player('player', {
         height: '315',
@@ -303,7 +321,6 @@ function onYouTubeIframeAPIReady() {
     });
 
 }
-
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
         var j = Math.floor(Math.random() * (i + 1));
@@ -312,78 +329,7 @@ function shuffleArray(array) {
         array[j] = temp;
     }
 }
-
-
-
-$('#newVideoForm').submit(function (eventObj) {
-
-    //console.log(eventObj.currentTarget.querySelector('input').value);
-
-    let url = eventObj.currentTarget.querySelector('input').value
-    //TODO: validate link
-    $.getJSON('https://noembed.com/embed',
-        { format: 'json', url: url }, function (data) {
-            $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickForm');
-            $('#trickLink').attr('value', $('#link').val())
-            $('#trickForm').submit();
-        })
-    //console.log(eventObj.currentTarget);
-
-    //$(this).append('<input type="hidden" name="title" value=""/>')
-    return false;
-})
-
-for (let i = 0; i < Modal.configModals.length; i++) {
-    // console.log(Modal.configModals[i].querySelector('form').getAttribute('id'))
-    let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
-    $("#" + formId).submit(function (eventObj) {
-        let url = eventObj.currentTarget.querySelector('input[type="text"]').value;
-        var updateTargetId = eventObj.currentTarget.querySelector('input[type="hidden"]').value;
-        $.getJSON('https://noembed.com/embed',
-            { format: 'json', url: url }, function (data) {
-
-                $('#trickUpdateForm').attr('action', '/update/' + updateTargetId)
-                $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickUpdateForm');
-                $('#trickUpdateLink').attr('value', $('#updateLink_' + formId.replace('updateForm_', "")).val());
-                $('#trickUpdateForm').submit();
-            })
-
-        return false;
-    })
-}
-
-for (let i = 0; i < Modal.configModals.length; i++) {
-    let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
-
-
-    const deleteButton = document.querySelector(`#${formId} .deleteVideo`);
-    let videoId = formId.replace('updateForm_', "")
-
-    let deleteAction = '/delete/' + Number(videoId)
-    deleteButton.onclick = () => {
-
-        document.querySelector('#deleteForm').setAttribute('action', deleteAction);
-        $('#deleteForm').submit();
-        //   alert('clicked')
-    }
-
-}
-for (let i = 0; i < Events.listOfVideo.length; i++) {
-    //$('li .titleWrapper').click(function () { alert('li click') })
-    let thumbnail = Events.listOfVideo[i].querySelector('.thumb');
-    let title = Events.listOfVideo[i].querySelector('.titleWrapper');
-
-    thumbnail.addEventListener('click', function () {
-        // console.log('thumb click ', Events.listOfVideo[i].getAttribute('ytlink'))
-        PlayerController.playSelected(Events.listOfVideo[i].getAttribute('ytlink'), Events.listOfVideo[i].getAttribute('id'))
-    })
-    title.addEventListener('click', function () {
-        PlayerController.playSelected(Events.listOfVideo[i].getAttribute('ytlink'), Events.listOfVideo[i].getAttribute('id'))
-    })
-}
-
 PlayerController.init();
 Modal.init();
-
 PlayerController.setPlaylist();
-
+Utils.prepareEvents();
