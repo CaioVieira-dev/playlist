@@ -74,7 +74,18 @@ const Utils = {
             $.getJSON('https://noembed.com/embed',
                 { format: 'json', url: url }, function (data) {
                     $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickForm');
-                    $('#trickLink').attr('value', $('#link').val())
+
+                    let inputtedLink = $('#link').val();
+                    //https://www.youtube.com/watch?v=9JgO27mgZvU&list=RDMM&start_radio=1
+                    if (inputtedLink.indexOf('&list=') != -1) {
+                        inputtedLink = inputtedLink.substr(0, inputtedLink.indexOf('&list='))
+                    }
+                    //https://www.youtube.com/watch?v=I3A0PJZZzBc&t=5786s
+                    if (inputtedLink.indexOf('&t=') != -1) {
+                        inputtedLink = inputtedLink.substr(0, inputtedLink.indexOf('&t'))
+                    }
+
+                    $('#trickLink').attr('value', inputtedLink)
                     $('#trickForm').submit();
                 })
             //console.log(eventObj.currentTarget);
