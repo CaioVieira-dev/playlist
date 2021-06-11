@@ -63,11 +63,7 @@ const Modal = {
 const Utils = {
     listOfVideo: document.querySelectorAll('li'),
     prepareEvents() {
-
-        //set new form submit event
         $('#newVideoForm').submit(function (eventObj) {
-
-            //console.log(eventObj.currentTarget.querySelector('input').value);
 
             let url = eventObj.currentTarget.querySelector('input').value
             //TODO: validate link
@@ -76,11 +72,11 @@ const Utils = {
                     $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickForm');
 
                     let inputtedLink = $('#link').val();
-                    //https://www.youtube.com/watch?v=9JgO27mgZvU&list=RDMM&start_radio=1
+
                     if (inputtedLink.indexOf('&list=') != -1) {
                         inputtedLink = inputtedLink.substr(0, inputtedLink.indexOf('&list='))
                     }
-                    //https://www.youtube.com/watch?v=I3A0PJZZzBc&t=5786s
+
                     if (inputtedLink.indexOf('&t=') != -1) {
                         inputtedLink = inputtedLink.substr(0, inputtedLink.indexOf('&t'))
                     }
@@ -88,36 +84,26 @@ const Utils = {
                     $('#trickLink').attr('value', inputtedLink)
                     $('#trickForm').submit();
                 })
-            //console.log(eventObj.currentTarget);
-
-            //$(this).append('<input type="hidden" name="title" value=""/>')
             return false;
         })
 
-        //set update event
         for (let i = 0; i < Modal.configModals.length; i++) {
-            // console.log(Modal.configModals[i].querySelector('form').getAttribute('id'))
             let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
             $("#" + formId).submit(function (eventObj) {
                 let url = eventObj.currentTarget.querySelector('input[type="text"]').value;
                 var updateTargetId = eventObj.currentTarget.querySelector('input[type="hidden"]').value;
                 $.getJSON('https://noembed.com/embed',
                     { format: 'json', url: url }, function (data) {
-
                         $('#trickUpdateForm').attr('action', '/update/' + updateTargetId)
                         $("<input />").attr('type', 'hidden').attr('value', data.title).attr('name', "title").appendTo('#trickUpdateForm');
                         $('#trickUpdateLink').attr('value', $('#updateLink_' + formId.replace('updateForm_', "")).val());
                         $('#trickUpdateForm').submit();
                     })
-
                 return false;
             })
         }
-        //set click event on delete button
         for (let i = 0; i < Modal.configModals.length; i++) {
             let formId = Modal.configModals[i].querySelector('form').getAttribute('id')
-
-
             const deleteButton = document.querySelector(`#${formId} .deleteVideo`);
             let videoId = formId.replace('updateForm_', "")
 
@@ -126,18 +112,14 @@ const Utils = {
 
                 document.querySelector('#deleteForm').setAttribute('action', deleteAction);
                 $('#deleteForm').submit();
-                //   alert('clicked')
             }
 
         }
-        //set click event on video list
         for (let i = 0; i < Utils.listOfVideo.length; i++) {
-            //$('li .titleWrapper').click(function () { alert('li click') })
             let thumbnail = Utils.listOfVideo[i].querySelector('.thumb');
             let title = Utils.listOfVideo[i].querySelector('.titleWrapper');
 
             thumbnail.addEventListener('click', function () {
-                // console.log('thumb click ', Utils.listOfVideo[i].getAttribute('ytlink'))
                 PlayerController.playSelected(Utils.listOfVideo[i].getAttribute('ytlink'), Utils.listOfVideo[i].getAttribute('id'))
             })
             title.addEventListener('click', function () {

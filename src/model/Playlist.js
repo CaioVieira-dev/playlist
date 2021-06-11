@@ -1,7 +1,5 @@
 const Database = require('../db/config')
 
-//playlist: ["bGwL06dBWlA", "oiIzKjDQACY", "UWkXo5XMTP4"]
-
 module.exports = {
     //Create
     async create(newVideo) {
